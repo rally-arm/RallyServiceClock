@@ -11,11 +11,9 @@
             src: url('./assets/WRCROMAN.TTF');
         }
         :root {
-            /* 配色のための変数 */
             --bg-color: #000;
             --text-color: #FFF;
             --accent-color: #FFF;
-            --card-bg: #111;
         }
         body {
             background-color: var(--bg-color);
@@ -33,22 +31,19 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* 時計・オフセットエリア */
         .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 40px;
+            height: 50px;
             flex-shrink: 0;
-            opacity: 0.8;
         }
-        .now-time { font-size: 40px; font-weight: bold; }
+        .now-time { font-size: 32px; font-weight: bold; }
         .adj-btn {
             background: rgba(128,128,128,0.2); color: inherit; border: 1px solid currentColor;
             padding: 5px 10px; border-radius: 5px; font-size: 10px;
         }
 
-        /* カウントダウンエリア */
         .countdown-area {
             flex: 1;
             display: flex;
@@ -56,10 +51,9 @@
             justify-content: center;
             align-items: center;
         }
-        .label { font-size: 14px; letter-spacing: 2px; margin-bottom: 5px; opacity: 0.7; }
+        .label { font-size: 14px; letter-spacing: 2px; margin-bottom: 5px; opacity: 0.8; }
         .time-left { font-size: 28vw; font-weight: bold; line-height: 0.9; font-variant-numeric: tabular-nums; }
 
-        /* 入力情報表示エリア */
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -76,7 +70,6 @@
         .info-val { font-size: 24px; font-weight: bold; color: var(--accent-color); }
         .info-label { font-size: 10px; margin-bottom: 3px; opacity: 0.8; }
 
-        /* 最終的なアウト時間 */
         .out-card {
             background-color: rgba(255,255,255,0.15);
             border: 2px solid var(--text-color);
@@ -87,7 +80,6 @@
         }
         .out-time { font-size: 42px; font-weight: bold; }
 
-        /* 操作パネル */
         .control-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -100,11 +92,11 @@
         }
         .btn-set { grid-column: span 2; }
 
-        /* 配色クラス定義 */
-        body.state-safe { --bg-color: ##008000; --text-color: #FFF; --accent-color: #FFF; }   /* 5分1秒〜：緑/白 */
-        body.state-warn { --bg-color: #F1C40F; --text-color: #000; --accent-color: #000; }   /* 5分〜1分：黄/黒 */
-        body.state-critical { --bg-color: #F1C40F; --text-color: #ff0000; --accent-color: #Cff0000; } /* 1分〜0分：黄/赤 */
-        body.state-over { --bg-color: #Cff0000; --text-color: #FFF; --accent-color: #FFF; }   /* 0分以下：赤/白 */
+        /* 配色クラス修正 */
+        body.state-safe { --bg-color: #008000; --text-color: #FFF; --accent-color: #FFF; }
+        body.state-warn { --bg-color: #F1C40F; --text-color: #000; --accent-color: #000; }
+        body.state-critical { --bg-color: #F1C40F; --text-color: #ff0000; --accent-color: #ff0000; }
+        body.state-over { --bg-color: #ff0000; --text-color: #FFF; --accent-color: #FFF; }
     </style>
 </head>
 <body>
@@ -143,7 +135,7 @@
         <button class="btn" onclick="setDuration(45)">45m</button>
         <button class="btn" onclick="setDuration(60)">60m</button>
         <button class="btn btn-set" id="in-btn">SET IN (Hold)</button>
-        <button class="btn btn-set" id="dur-btn">SET Service Time (Hold)</button>
+        <button class="btn btn-set" id="dur-btn">SET SVC TIME (Hold)</button>
     </div>
 
     <script>
@@ -165,24 +157,22 @@
                 const totalSec = Math.floor(diffMs / 1000);
                 const displayArea = document.getElementById('time-left');
 
-                // カウントダウン表示の作成
                 const absSec = Math.abs(totalSec);
                 const m = Math.floor(absSec / 60);
                 const s = absSec % 60;
                 const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
                 displayArea.innerText = totalSec < 0 ? "-" + timeStr : timeStr;
 
-                // 5. 配色ロジック
-                if (totalSec > 300) { // 5分1秒以上
+                if (totalSec > 300) {
                     document.body.className = 'state-safe';
                     document.getElementById('status-label').innerText = "REMAINING";
-                } else if (totalSec > 60) { // 5分0秒〜1分1秒
+                } else if (totalSec > 60) {
                     document.body.className = 'state-warn';
                     document.getElementById('status-label').innerText = "WARNING";
-                } else if (totalSec > 0) { // 1分0秒〜0分1秒
+                } else if (totalSec > 0) {
                     document.body.className = 'state-critical';
                     document.getElementById('status-label').innerText = "READY!";
-                } else { // 0分以下
+                } else {
                     document.body.className = 'state-over';
                     document.getElementById('status-label').innerText = "TIME OVER";
                 }
@@ -190,7 +180,6 @@
             requestAnimationFrame(update);
         }
 
-        // サービスアウトの計算
         function calculateOut() {
             if (inTime && durationMins >= 0) {
                 outTime = inTime + (durationMins * 60 * 1000);
@@ -199,29 +188,34 @@
             }
         }
 
-        function setDuration(m) {
+        window.setDuration = (m) => {
             durationMins = m;
             calculateOut();
-        }
+        };
 
-        function adjustOffset(ms) {
+        window.adjustOffset = (ms) => {
             offset += ms;
             save();
-        }
+        };
 
         function renderInfo() {
             if (inTime) {
                 const d = new Date(inTime);
-                document.getElementById('in-time-disp').innerText = d.toLocaleTimeString('ja-JP', {hour12:false});
+                document.getElementById('in-time-disp').innerText = 
+                    String(d.getHours()).padStart(2,'0') + ":" + 
+                    String(d.getMinutes()).padStart(2,'0') + ":" + 
+                    String(d.getSeconds()).padStart(2,'0');
             }
             document.getElementById('dur-mins-disp').innerText = durationMins + " min";
             if (outTime) {
                 const d = new Date(outTime);
-                document.getElementById('out-time-disp').innerText = d.toLocaleTimeString('ja-JP', {hour12:false});
+                document.getElementById('out-time-disp').innerText = 
+                    String(d.getHours()).padStart(2,'0') + ":" + 
+                    String(d.getMinutes()).padStart(2,'0') + ":" + 
+                    String(d.getSeconds()).padStart(2,'0');
             }
         }
 
-        // 長押し処理
         function setLongPress(id, callback) {
             const el = document.getElementById(id);
             let timer;
@@ -233,7 +227,6 @@
             el.addEventListener('mouseup', cancel);
         }
 
-        // IN時間の入力
         setLongPress('in-btn', () => {
             const timeStr = prompt("SERVICE IN TIME (HHMMSS)", "120000");
             if (timeStr && timeStr.length === 6) {
@@ -244,19 +237,15 @@
             }
         });
 
-        // 分数の自由入力
         setLongPress('dur-btn', () => {
             const mins = prompt("SERVICE MINUTES", "20");
-            if (mins !== null) {
+            if (mins !== null && mins !== "") {
                 durationMins = parseInt(mins);
                 calculateOut();
             }
         });
 
-        function save() {
-            localStorage.setItem('svc_clock_v2', JSON.stringify({ offset, inTime, durationMins, outTime }));
-        }
-
+        function save() { localStorage.setItem('svc_clock_v2', JSON.stringify({ offset, inTime, durationMins, outTime })); }
         function load() {
             const saved = localStorage.getItem('svc_clock_v2');
             if (saved) {
@@ -268,7 +257,6 @@
                 renderInfo();
             }
         }
-
         load();
         update();
     </script>
