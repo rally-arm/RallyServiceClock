@@ -52,7 +52,17 @@
             align-items: center;
         }
         .label { font-size: 14px; letter-spacing: 2px; margin-bottom: 5px; opacity: 0.8; }
+        /* 文字サイズを少し大きく戻しました（記号が消えるため） */
         .time-left { font-size: 28vw; font-weight: bold; line-height: 0.9; font-variant-numeric: tabular-nums; }
+
+        /* 1分前：黒フチの設定 */
+        body.state-critical .time-left {
+            text-shadow: 
+                2px 2px 0 #000, -2px -2px 0 #000, 
+                2px -2px 0 #000, -2px 2px 0 #000,
+                0px 2px 0 #000, 0px -2px 0 #000,
+                2px 0px 0 #000, -2px 0px 0 #000;
+        }
 
         .info-grid {
             display: grid;
@@ -92,7 +102,6 @@
         }
         .btn-set { grid-column: span 2; }
 
-        /* 配色クラス修正 */
         body.state-safe { --bg-color: #008000; --text-color: #FFF; --accent-color: #FFF; }
         body.state-warn { --bg-color: #F1C40F; --text-color: #000; --accent-color: #000; }
         body.state-critical { --bg-color: #F1C40F; --text-color: #ff0000; --accent-color: #ff0000; }
@@ -114,11 +123,11 @@
     </div>
 
     <div class="info-grid">
-        <div class="info-card" id="in-trigger">
+        <div class="info-card">
             <div class="info-label">SERVICE IN</div>
             <div class="info-val" id="in-time-disp">--:--:--</div>
         </div>
-        <div class="info-card" id="dur-trigger">
+        <div class="info-card">
             <div class="info-label">SERVICE TIME</div>
             <div class="info-val" id="dur-mins-disp">-- min</div>
         </div>
@@ -157,12 +166,22 @@
                 const totalSec = Math.floor(diffMs / 1000);
                 const displayArea = document.getElementById('time-left');
 
-                const absSec = Math.abs(totalSec);
-                const m = Math.floor(absSec / 60);
-                const s = absSec % 60;
-                const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                displayArea.innerText = totalSec < 0 ? "-" + timeStr : timeStr;
+                if (totalSec >= 0) {
+                    // 通常カウントダウン
+                    const m = Math.floor(totalSec / 60);
+                    const s = totalSec % 60;
+                    displayArea.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                } else {
+                    // オーバー時：現在時刻 - アウト時刻 - 1秒（マイナス記号なし）
+                    const overSec = Math.floor((now - outTime) / 1000) - 1;
+                    const absOverSec = Math.max(0, overSec + 1); 
+                    const m = Math.floor(absOverSec / 60);
+                    const s = absOverSec % 60;
+                    // マイナス記号をつけずに表示
+                    displayArea.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                }
 
+                // 配色ロジック
                 if (totalSec > 300) {
                     document.body.className = 'state-safe';
                     document.getElementById('status-label').innerText = "REMAINING";
