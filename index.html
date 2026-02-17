@@ -254,7 +254,7 @@
                 // TIMER ON時
                 headerVal.innerText = `${hh}:${mm}:${ss}`;
                 const diffMs = outTime - now;
-                const totalSec = Math.floor(diffMs / 1000);
+                const totalSec = Math.floor(diffMs / 1000) + 1;
 
                 if (totalSec >= 0) {
                     // 現在時刻 < OUT
