@@ -37,17 +37,15 @@
             --accent-color: #000000;
         }
 
-        /* ヘッダー：重なり防止 */
         .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             height: 55px;
             flex-shrink: 0;
-            overflow: hidden;
         }
         .header-info { 
-            font-size: clamp(20px, 6vw, 32px); /* 画面幅に合わせて伸縮 */
+            font-size: clamp(20px, 6vw, 32px); 
             font-weight: bold; 
             white-space: nowrap;
         }
@@ -59,7 +57,6 @@
             padding: 6px 10px; border-radius: 8px; font-size: 11px;
         }
 
-        /* 中央エリア：はみ出し防止 */
         .countdown-area {
             flex: 1;
             display: flex;
@@ -67,7 +64,7 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            min-height: 0; /* flex内の縮小を許可 */
+            min-height: 0;
         }
 
         .mode-sw-container {
@@ -87,7 +84,6 @@
 
         .label { font-size: 14px; letter-spacing: 2px; margin-bottom: 5px; opacity: 0.8; }
         
-        /* 巨大文字：はみ出し対策に clamp を使用 */
         .time-left { 
             font-size: clamp(50px, 24vw, 32vw); 
             font-weight: bold; 
@@ -105,7 +101,6 @@
                 2px 2px 5px #ff0000;
         }
 
-        /* インフォエリア：グリッドの崩れ防止 */
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -119,7 +114,7 @@
             border-radius: 12px;
             padding: 10px;
             text-align: center;
-            min-width: 0; /* グリッド内でのはみ出し防止 */
+            min-width: 0;
         }
         .info-val { font-size: clamp(18px, 5vw, 26px); font-weight: bold; color: var(--accent-color); white-space: nowrap; }
         .info-label { font-size: 10px; margin-bottom: 3px; opacity: 0.8; }
@@ -135,7 +130,6 @@
         }
         .out-time { font-size: clamp(24px, 8vw, 42px); font-weight: bold; }
 
-        /* ボタン：崩れ防止 */
         .preset-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -148,7 +142,6 @@
             padding: 12px 0; border-radius: 8px; font-size: clamp(12px, 4vw, 18px); font-weight: bold;
         }
 
-        /* 競技モード配色 */
         body.state-safe { --bg-color: #008000; --text-color: #FFF; --accent-color: #FFF; }
         body.state-warn { --bg-color: #F1C40F; --text-color: #000; --accent-color: #000; }
         body.state-critical { --bg-color: #F1C40F; --text-color: #000; --accent-color: #000; }
@@ -199,8 +192,190 @@
     </div>
 
     <script>
-        // JSロジックは前回と同じ（安定しているので維持）
-        // ... (省略：以前のスクリプトをそのまま使用してください)
+        let offset = 0;
+        let inTime = null;
+        let durationMins = 0;
+        let outTime = null;
+        let timerEnabled = true;
+
+        function toggleMode() {
+            timerEnabled = !timerEnabled;
+            const btn = document.getElementById('mode-btn');
+            btn.innerText = timerEnabled ? "TIMER ON" : "TIMER OFF";
+            if (!timerEnabled) {
+                document.body.className = 'mode-off';
+                document.getElementById('status-label').innerText = "CURRENT CLOCK";
+                document.getElementById('header-label').innerText = "UNTIL IN";
+            } else {
+                document.getElementById('header-label').innerText = "CLOCK";
+            }
+            save();
+        }
+
+        function update() {
+            const now = Date.now() + offset;
+            const d = new Date(now);
+            const hh = String(d.getHours()).padStart(2,'0');
+            const mm = String(d.getMinutes()).padStart(2,'0');
+            const ss = String(d.getSeconds()).padStart(2,'0');
+            
+            const headerVal = document.getElementById('header-val');
+            const displayArea = document.getElementById('time-left');
+
+            if (!timerEnabled) {
+                displayArea.innerText = `${hh}:${mm}:${ss}`;
+                if (inTime) {
+                    const inDiff = inTime - now;
+                    const inTotalSec = Math.floor(inDiff / 1000);
+                    if (inTotalSec >= 0) {
+                        const im = Math.floor(inTotalSec / 60);
+                        const is = inTotalSec % 60;
+                        headerVal.innerText = `${String(im).padStart(2,'0')}:${String(is).padStart(2,'0')}`;
+                    } else {
+                        headerVal.innerText = "IN PASS";
+                    }
+                } else {
+                    headerVal.innerText = "--:--";
+                }
+            } else if (outTime) {
+                headerVal.innerText = `${hh}:${mm}:${ss}`;
+                const diffMs = outTime - now;
+                const totalSec = Math.floor(diffMs / 1000);
+
+                if (totalSec >= 0) {
+                    const m = Math.floor(totalSec / 60);
+                    const s = totalSec % 60;
+                    displayArea.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                } else {
+                    const overSec = Math.floor((now - outTime) / 1000) - 1;
+                    const absOverSec = Math.max(0, overSec + 1); 
+                    const m = Math.floor(absOverSec / 60);
+                    const s = absOverSec % 60;
+                    displayArea.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                }
+
+                if (totalSec > 300) {
+                    document.body.className = 'state-safe';
+                    document.getElementById('status-label').innerText = "REMAINING";
+                } else if (totalSec > 60) {
+                    document.body.className = 'state-warn';
+                    document.getElementById('status-label').innerText = "WARNING";
+                } else if (totalSec > 0) {
+                    document.body.className = 'state-critical';
+                    document.getElementById('status-label').innerText = "READY!";
+                } else {
+                    document.body.className = 'state-over';
+                    document.getElementById('status-label').innerText = "TIME OVER";
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        function calculateOut() {
+            if (inTime && durationMins >= 0) {
+                outTime = inTime + (durationMins * 60 * 1000);
+                renderInfo();
+                save();
+            }
+        }
+
+        window.setDuration = (m) => {
+            durationMins = m;
+            calculateOut();
+        };
+
+        window.adjustOffset = (ms) => {
+            offset += ms;
+            save();
+        };
+
+        function renderInfo() {
+            if (inTime) {
+                const d = new Date(inTime);
+                document.getElementById('in-time-disp').innerText = 
+                    String(d.getHours()).padStart(2,'0') + ":" + 
+                    String(d.getMinutes()).padStart(2,'0') + ":" + 
+                    String(d.getSeconds()).padStart(2,'0');
+            }
+            document.getElementById('dur-mins-disp').innerText = durationMins + " min";
+            if (outTime) {
+                const d = new Date(outTime);
+                document.getElementById('out-time-disp').innerText = 
+                    String(d.getHours()).padStart(2,'0') + ":" + 
+                    String(d.getMinutes()).padStart(2,'0') + ":" + 
+                    String(d.getSeconds()).padStart(2,'0');
+            }
+        }
+
+        // --- HOLD機能のコアロジック ---
+        function setLongPress(id, callback) {
+            const el = document.getElementById(id);
+            if (!el) return; // 要素がない場合はスキップ
+            let timer;
+            const start = (e) => { 
+                // PCでもモバイルでも動くように
+                timer = setTimeout(callback, 700); 
+            };
+            const cancel = () => clearTimeout(timer);
+            
+            el.addEventListener('touchstart', start, {passive: true});
+            el.addEventListener('touchend', cancel);
+            el.addEventListener('mousedown', start);
+            el.addEventListener('mouseup', cancel);
+            el.addEventListener('mouseleave', cancel);
+        }
+
+        // --- HOLDイベントの登録 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            setLongPress('header-trigger', () => {
+                const group = document.getElementById('adj-group');
+                group.style.display = (group.style.display === 'flex') ? 'none' : 'flex';
+            });
+
+            setLongPress('in-card-trigger', () => {
+                const nowD = new Date(Date.now() + offset);
+                const defaultTime = String(nowD.getHours()).padStart(2, '0') + 
+                                    String(nowD.getMinutes()).padStart(2, '0') + "00";
+                const timeStr = prompt("SERVICE IN TIME (HHMMSS)", defaultTime);
+                if (timeStr && timeStr.length === 6) {
+                    const target = new Date();
+                    target.setHours(timeStr.substring(0,2), timeStr.substring(2,4), timeStr.substring(4,6), 0);
+                    inTime = target.getTime();
+                    calculateOut();
+                }
+            });
+
+            setLongPress('dur-card-trigger', () => {
+                const mins = prompt("SERVICE MINUTES", "20");
+                if (mins !== null && mins !== "") {
+                    durationMins = parseInt(mins);
+                    calculateOut();
+                }
+            });
+            
+            load();
+            update();
+        });
+
+        function save() { localStorage.setItem('svc_clock_v3', JSON.stringify({ offset, inTime, durationMins, outTime, timerEnabled })); }
+        function load() {
+            const saved = localStorage.getItem('svc_clock_v3');
+            if (saved) {
+                const data = JSON.parse(saved);
+                offset = data.offset || 0;
+                inTime = data.inTime || null;
+                durationMins = data.durationMins || 0;
+                outTime = data.outTime || null;
+                timerEnabled = data.timerEnabled !== undefined ? data.timerEnabled : true;
+                const btn = document.getElementById('mode-btn');
+                btn.innerText = timerEnabled ? "TIMER ON" : "TIMER OFF";
+                if (!timerEnabled) {
+                    document.body.className = 'mode-off';
+                    document.getElementById('header-label').innerText = "UNTIL IN";
+                }
+                renderInfo();
+            }
+        }
     </script>
 </body>
 </html>
