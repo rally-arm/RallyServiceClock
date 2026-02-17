@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ServiceClock | RallyArm</title>
+    <style>
+        @font-face {
+            font-family: 'WRCROMAN';
+            src: url('./assets/WRCROMAN.TTF');
+        }
+        :root {
+            --bg-color: #000;
+            --card-color: #111;
+            --text-color: #FFF;
+            --accent-yellow: #F1C40F;
+            --accent-red: #C0392B;
+            --border-color: #333;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'WRCROMAN', sans-serif;
+            margin: 0;
+            padding: 15px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: background-color 0.5s;
+        }
+
+        /* 時計エリア */
+        .now-clock-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 50px;
+        }
+        .now-time { font-size: 28px; font-weight: bold; color: #888; }
+        .adj-btn {
+            background: #333; color: #fff; border: 1px solid #444;
+            padding: 8px; border-radius: 8px; font-size: 12px;
+        }
+
+        /* メインカウントダウン */
+        .countdown-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .label { font-size: 16px; color: #aaa; letter-spacing: 2px; }
+        .time-left { font-size: 120px; font-weight: bold; line-height: 1; color: var(--text-color); }
+        .time-left.over { color: var(--accent-red); }
+
+        /* ターゲット時刻表示 */
+        .target-card {
+            background-color: var(--card-color);
+            border: 2px solid var(--border-color);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .target-label { font-size: 14px; color: #888; margin-bottom: 5px; }
+        .out-time { font-size: 48px; color: var(--accent-yellow); font-weight: bold; }
+
+        /* 操作パネル */
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .btn {
+            background: #222; border: 1px solid #444; color: white;
+            padding: 15px 0; border-radius: 12px; font-size: 18px; font-weight: bold;
+        }
+        .btn-set {
+            grid-column: span 4;
+            background: #004466; border: 1px solid #006699;
+            margin-top: 5px;
+        }
+
+        /* 警告背景 */
+        body.warning-mid { background-color: #443300; }      /* 3分前 */
+        body.warning-critical { background-color: #550000; } /* 1分前 */
+
+        #flash-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; opacity: 0; z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <div id="flash-overlay"></div>
+
+    <div class="now-clock-row">
+        <div class="now-time" id="now-time">00:00:00</div>
+        <div>
+            <button class="adj-btn" onclick="adjustOffset(-100)">-0.1s</button>
+            <button class="adj-btn" onclick="adjustOffset(100)">+0.1s</button>
+        </div>
+    </div>
+
+    <div class="countdown-area">
+        <div class="label">REMAINING</div>
+        <div class="time-left" id="time-left">--:--</div>
+    </div>
+
+    <div class="target-card" id="target-trigger">
+        <div class="target-label
