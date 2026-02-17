@@ -42,7 +42,7 @@
             flex-shrink: 0;
             opacity: 0.8;
         }
-        .now-time { font-size: 22px; font-weight: bold; }
+        .now-time { font-size: 40px; font-weight: bold; }
         .adj-btn {
             background: rgba(128,128,128,0.2); color: inherit; border: 1px solid currentColor;
             padding: 5px 10px; border-radius: 5px; font-size: 10px;
@@ -101,10 +101,10 @@
         .btn-set { grid-column: span 2; }
 
         /* 配色クラス定義 */
-        body.state-safe { --bg-color: #27AE60; --text-color: #FFF; --accent-color: #FFF; }   /* 5分1秒〜：緑/白 */
+        body.state-safe { --bg-color: ##008000; --text-color: #FFF; --accent-color: #FFF; }   /* 5分1秒〜：緑/白 */
         body.state-warn { --bg-color: #F1C40F; --text-color: #000; --accent-color: #000; }   /* 5分〜1分：黄/黒 */
-        body.state-critical { --bg-color: #F1C40F; --text-color: #C0392B; --accent-color: #C0392B; } /* 1分〜0分：黄/赤 */
-        body.state-over { --bg-color: #C0392B; --text-color: #FFF; --accent-color: #FFF; }   /* 0分以下：赤/白 */
+        body.state-critical { --bg-color: #F1C40F; --text-color: #ff0000; --accent-color: #Cff0000; } /* 1分〜0分：黄/赤 */
+        body.state-over { --bg-color: #Cff0000; --text-color: #FFF; --accent-color: #FFF; }   /* 0分以下：赤/白 */
     </style>
 </head>
 <body>
@@ -127,7 +127,7 @@
             <div class="info-val" id="in-time-disp">--:--:--</div>
         </div>
         <div class="info-card" id="dur-trigger">
-            <div class="info-label">SVC MINS</div>
+            <div class="info-label">SERVICE TIME</div>
             <div class="info-val" id="dur-mins-disp">-- min</div>
         </div>
     </div>
@@ -139,11 +139,11 @@
 
     <div class="control-grid">
         <button class="btn" onclick="setDuration(15)">15m</button>
-        <button class="btn" onclick="setDuration(20)">20m</button>
         <button class="btn" onclick="setDuration(30)">30m</button>
         <button class="btn" onclick="setDuration(45)">45m</button>
+        <button class="btn" onclick="setDuration(60)">60m</button>
         <button class="btn btn-set" id="in-btn">SET IN (Hold)</button>
-        <button class="btn btn-set" id="dur-btn">SET MINS (Hold)</button>
+        <button class="btn btn-set" id="dur-btn">SET Service Time (Hold)</button>
     </div>
 
     <script>
