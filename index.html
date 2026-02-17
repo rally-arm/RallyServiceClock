@@ -43,7 +43,7 @@
             align-items: center;
             height: 55px;
             flex-shrink: 0;
-            padding: 0 5px; /* 左右に少しマージン */
+            padding: 0 5px;
         }
         .header-info { 
             font-size: clamp(20px, 6vw, 30px); 
@@ -66,7 +66,7 @@
             align-items: center;
             position: relative;
             min-height: 0;
-            padding: 0 10px; /* 数字の両端にマージンを追加 */
+            padding: 0 10px;
         }
 
         .mode-sw-container {
@@ -86,7 +86,6 @@
 
         .label { font-size: 14px; letter-spacing: 2px; margin-bottom: 5px; opacity: 0.8; }
         
-        /* フォントサイズを32vwから28vwに落とし、横幅の余裕を確保 */
         .time-left { 
             font-size: clamp(40px, 24vw, 28vw); 
             font-weight: bold; 
@@ -203,6 +202,11 @@
 
         function toggleMode() {
             timerEnabled = !timerEnabled;
+            applyModeUI();
+            save();
+        }
+
+        function applyModeUI() {
             const btn = document.getElementById('mode-btn');
             btn.innerText = timerEnabled ? "TIMER ON" : "TIMER OFF";
             if (!timerEnabled) {
@@ -212,7 +216,6 @@
             } else {
                 document.getElementById('header-label').innerText = "CLOCK";
             }
-            save();
         }
 
         function update() {
@@ -225,54 +228,59 @@
             const headerVal = document.getElementById('header-val');
             const displayArea = document.getElementById('time-left');
 
+            // 【自動切替ロジック】OFF時にIN時刻を過ぎたら自動でONにする
+            if (!timerEnabled && inTime && now >= inTime) {
+                timerEnabled = true;
+                applyModeUI();
+            }
+
             if (!timerEnabled) {
-                // OFFモード
+                // TIMER OFF時
                 displayArea.innerText = `${hh}:${mm}:${ss}`;
                 if (inTime) {
                     const inDiff = inTime - now;
-                    // 残り時間に1秒足して表示（15:00ちょうどに00:01となるように調整）
-                    const inTotalSec = Math.floor(inDiff / 1000) + 1;
+                    const inTotalSec = Math.floor(inDiff / 1000) + 1; // Until IN = IN - 現在時刻 + 1
                     if (inTotalSec > 0) {
                         const im = Math.floor(inTotalSec / 60);
                         const is = inTotalSec % 60;
                         headerVal.innerText = `${String(im).padStart(2,'0')}:${String(is).padStart(2,'0')}`;
-                    } else if (inTotalSec === 0) {
-                        headerVal.innerText = "00:00";
                     } else {
-                        headerVal.innerText = "IN PASS";
+                        headerVal.innerText = "00:00";
                     }
                 } else {
                     headerVal.innerText = "--:--";
                 }
             } else if (outTime) {
-                // ONモード
+                // TIMER ON時
                 headerVal.innerText = `${hh}:${mm}:${ss}`;
                 const diffMs = outTime - now;
                 const totalSec = Math.floor(diffMs / 1000);
 
                 if (totalSec >= 0) {
+                    // 現在時刻 < OUT
                     const m = Math.floor(totalSec / 60);
                     const s = totalSec % 60;
                     displayArea.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+                    // 配色
+                    if (totalSec > 300) {
+                        document.body.className = 'state-safe';
+                        document.getElementById('status-label').innerText = "REMAINING";
+                    } else if (totalSec > 60) {
+                        document.body.className = 'state-warn';
+                        document.getElementById('status-label').innerText = "WARNING";
+                    } else {
+                        document.body.className = 'state-critical';
+                        document.getElementById('status-label').innerText = "READY!";
+                    }
                 } else {
-                    // オーバー時は単純経過時間を表示
-                    const overSec = Math.floor((now - outTime) / 1000);
+                    // OUT < 現在時刻 (オーバータイム)
+                    // REMAIN = 現在時刻 - OUT - 1
+                    const overSec = Math.floor((now - outTime) / 1000); 
                     const m = Math.floor(overSec / 60);
                     const s = overSec % 60;
                     displayArea.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                }
-
-                // 配色管理
-                if (totalSec > 300) {
-                    document.body.className = 'state-safe';
-                    document.getElementById('status-label').innerText = "REMAINING";
-                } else if (totalSec > 60) {
-                    document.body.className = 'state-warn';
-                    document.getElementById('status-label').innerText = "WARNING";
-                } else if (totalSec > 0) {
-                    document.body.className = 'state-critical';
-                    document.getElementById('status-label').innerText = "READY!";
-                } else {
+                    
                     document.body.className = 'state-over';
                     document.getElementById('status-label').innerText = "TIME OVER";
                 }
@@ -280,6 +288,7 @@
             requestAnimationFrame(update);
         }
 
+        // --- 以下共通ロジック ---
         function calculateOut() {
             if (inTime && durationMins >= 0) {
                 outTime = inTime + (durationMins * 60 * 1000);
@@ -370,12 +379,7 @@
                 durationMins = data.durationMins || 0;
                 outTime = data.outTime || null;
                 timerEnabled = data.timerEnabled !== undefined ? data.timerEnabled : true;
-                const btn = document.getElementById('mode-btn');
-                btn.innerText = timerEnabled ? "TIMER ON" : "TIMER OFF";
-                if (!timerEnabled) {
-                    document.body.className = 'mode-off';
-                    document.getElementById('header-label').innerText = "UNTIL IN";
-                }
+                applyModeUI();
                 renderInfo();
             }
         }
