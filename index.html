@@ -31,7 +31,13 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* 時計エリア */
+        /* OFFモード（時計モード）のスタイル */
+        body.mode-off {
+            --bg-color: #FFFFFF;
+            --text-color: #000000;
+            --accent-color: #000000;
+        }
+
         .header-row {
             display: flex;
             justify-content: space-between;
@@ -39,33 +45,53 @@
             height: 60px;
             flex-shrink: 0;
         }
-        .now-time { font-size: 36px; font-weight: bold; }
+        /* 左上の表示エリア（現在時刻 or INまでの残り） */
+        .header-info { font-size: 32px; font-weight: bold; }
+        .header-label { font-size: 10px; opacity: 0.7; display: block; margin-bottom: -5px; }
+
+        #adj-group { display: none; gap: 5px; }
         .adj-btn {
             background: rgba(128,128,128,0.2); color: inherit; border: 1px solid currentColor;
             padding: 8px 12px; border-radius: 8px; font-size: 12px;
         }
 
-        /* カウントダウンエリア (中央に大きく) */
         .countdown-area {
             flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            position: relative;
         }
-        .label { font-size: 16px; letter-spacing: 3px; margin-bottom: 5px; opacity: 0.8; }
-        .time-left { font-size: 32vw; font-weight: bold; line-height: 0.85; font-variant-numeric: tabular-nums; }
 
-        /* 1分前：黒文字 / 赤フチ */
+        .mode-sw-container {
+            position: absolute;
+            top: 0;
+            z-index: 10;
+        }
+        .mode-btn {
+            background: rgba(128,128,128,0.1);
+            border: 1px solid currentColor;
+            color: inherit;
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .label { font-size: 16px; letter-spacing: 3px; margin-bottom: 5px; opacity: 0.8; }
+        .time-left { font-size: 28vw; font-weight: bold; line-height: 0.85; font-variant-numeric: tabular-nums; }
+
+        /* 赤フチ強化（競技モード用） */
         body.state-critical .time-left {
             text-shadow: 
-                2px 2px 0 #ff0000, -2px -2px 0 #ff0000, 
-                2px -2px 0 #ff0000, -2px 2px 0 #ff0000,
-                0px 2px 0 #ff0000, 0px -2px 0 #ff0000,
-                2px 0px 0 #ff0000, -2px 0px 0 #ff0000;
+                3px 3px 0 #ff0000, -3px -3px 0 #ff0000, 
+                3px -3px 0 #ff0000, -3px 3px 0 #ff0000,
+                0px 3px 0 #ff0000, 0px -3px 0 #ff0000,
+                3px 0px 0 #ff0000, -3px 0px 0 #ff0000,
+                2px 2px 5px #ff0000;
         }
 
-        /* 入力エリア (ここをタップ可能にする) */
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -73,29 +99,25 @@
             margin-bottom: 15px;
         }
         .info-card {
-            background-color: rgba(255,255,255,0.1);
-            border: 2px solid rgba(255,255,255,0.2);
+            background-color: rgba(128,128,128,0.1);
+            border: 1px solid rgba(128,128,128,0.2);
             border-radius: 15px;
             padding: 15px;
             text-align: center;
-            transition: transform 0.1s;
         }
-        .info-card:active { transform: scale(0.98); background-color: rgba(255,255,255,0.2); }
-        .info-val { font-size: 28px; font-weight: bold; color: var(--accent-color); }
-        .info-label { font-size: 12px; margin-bottom: 5px; opacity: 0.8; }
+        .info-val { font-size: 26px; font-weight: bold; color: var(--accent-color); }
+        .info-label { font-size: 11px; margin-bottom: 5px; opacity: 0.8; }
 
-        /* ターゲット時刻 */
         .out-card {
-            background-color: rgba(255,255,255,0.15);
+            background-color: rgba(128,128,128,0.15);
             border: 2px solid var(--text-color);
             border-radius: 15px;
-            padding: 15px;
+            padding: 12px;
             text-align: center;
             margin-bottom: 20px;
         }
-        .out-time { font-size: 48px; font-weight: bold; }
+        .out-time { font-size: 42px; font-weight: bold; }
 
-        /* プリセット時間ボタン (ここだけ残す) */
         .preset-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -103,11 +125,11 @@
             margin-bottom: env(safe-area-inset-bottom);
         }
         .btn-p {
-            background: rgba(255,255,255,0.1); border: 1px solid currentColor; color: inherit;
+            background: rgba(128,128,128,0.1); border: 1px solid currentColor; color: inherit;
             padding: 15px 0; border-radius: 10px; font-size: 18px; font-weight: bold;
         }
 
-        /* 配色定義 */
+        /* 競技モード(ON)の配色 */
         body.state-safe { --bg-color: #008000; --text-color: #FFF; --accent-color: #FFF; }
         body.state-warn { --bg-color: #F1C40F; --text-color: #000; --accent-color: #000; }
         body.state-critical { --bg-color: #F1C40F; --text-color: #000; --accent-color: #000; }
@@ -116,25 +138,31 @@
 </head>
 <body>
     <div class="header-row">
-        <div class="now-time" id="now-time">00:00:00</div>
-        <div>
+        <div class="header-info" id="header-trigger">
+            <span class="header-label" id="header-label">CLOCK</span>
+            <span id="header-val">00:00:00</span>
+        </div>
+        <div id="adj-group">
             <button class="adj-btn" onclick="adjustOffset(-100)">-0.1s</button>
             <button class="adj-btn" onclick="adjustOffset(100)">+0.1s</button>
         </div>
     </div>
 
     <div class="countdown-area">
+        <div class="mode-sw-container">
+            <button class="mode-btn" onclick="toggleMode()" id="mode-btn">TIMER ON</button>
+        </div>
         <div class="label" id="status-label">REMAINING</div>
-        <div id="time-left" class="time-left">--:--</div>
+        <div id="time-left" class="time-left">--:--:--</div>
     </div>
 
     <div class="info-grid">
         <div class="info-card" id="in-card-trigger">
-            <div class="info-label">SERVICE IN (Hold)</div>
+            <div class="info-label">Service IN (Hold)</div>
             <div class="info-val" id="in-time-disp">--:--:--</div>
         </div>
         <div class="info-card" id="dur-card-trigger">
-            <div class="info-label">SVC TIME (Hold)</div>
+            <div class="info-label">Service Time (Hold)</div>
             <div class="info-val" id="dur-mins-disp">-- min</div>
         </div>
     </div>
@@ -156,49 +184,92 @@
         let inTime = null;
         let durationMins = 0;
         let outTime = null;
+        let timerEnabled = true;
+
+        function toggleMode() {
+            timerEnabled = !timerEnabled;
+            const btn = document.getElementById('mode-btn');
+            btn.innerText = timerEnabled ? "TIMER ON" : "TIMER OFF";
+            if (!timerEnabled) {
+                document.body.className = 'mode-off';
+                document.getElementById('status-label').innerText = "CURRENT CLOCK";
+                document.getElementById('header-label').innerText = "UNTIL IN";
+            } else {
+                document.getElementById('header-label').innerText = "CLOCK";
+            }
+            save();
+        }
 
         function update() {
             const now = Date.now() + offset;
             const d = new Date(now);
-            document.getElementById('now-time').innerText = 
-                String(d.getHours()).padStart(2,'0') + ":" + 
-                String(d.getMinutes()).padStart(2,'0') + ":" + 
-                String(d.getSeconds()).padStart(2,'0');
+            const hh = String(d.getHours()).padStart(2,'0');
+            const mm = String(d.getMinutes()).padStart(2,'0');
+            const ss = String(d.getSeconds()).padStart(2,'0');
+            
+            const headerVal = document.getElementById('header-val');
+            const displayArea = document.getElementById('time-left');
 
-            if (outTime) {
-                const diffMs = outTime - now;
-                const totalSec = Math.floor(diffMs / 1000);
-                const displayArea = document.getElementById('time-left');
-
-                if (totalSec >= 0) {
-                    const m = Math.floor(totalSec / 60);
-                    const s = totalSec % 60;
-                    displayArea.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            if (!timerEnabled) {
+                // --- OFFモード ---
+                // 中央：現在時刻（秒付き）
+                displayArea.innerText = `${hh}:${mm}:${ss}`;
+                
+                // 左上：INまでの残り時間
+                if (inTime) {
+                    const inDiff = inTime - now;
+                    const inTotalSec = Math.floor(inDiff / 1000);
+                    if (inTotalSec >= 0) {
+                        const im = Math.floor(inTotalSec / 60);
+                        const is = inTotalSec % 60;
+                        headerVal.innerText = `${String(im).padStart(2,'0')}:${String(is).padStart(2,'0')}`;
+                    } else {
+                        headerVal.innerText = "IN PASS";
+                    }
                 } else {
-                    const overSec = Math.floor((now - outTime) / 1000) - 1;
-                    const absOverSec = Math.max(0, overSec + 1); 
-                    const m = Math.floor(absOverSec / 60);
-                    const s = absOverSec % 60;
-                    displayArea.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                    headerVal.innerText = "--:--";
                 }
+            } else {
+                // --- ONモード ---
+                // 左上：現在時刻
+                headerVal.innerText = `${hh}:${mm}:${ss}`;
 
-                if (totalSec > 300) {
-                    document.body.className = 'state-safe';
-                    document.getElementById('status-label').innerText = "REMAINING";
-                } else if (totalSec > 60) {
-                    document.body.className = 'state-warn';
-                    document.getElementById('status-label').innerText = "WARNING";
-                } else if (totalSec > 0) {
-                    document.body.className = 'state-critical';
-                    document.getElementById('status-label').innerText = "READY!";
-                } else {
-                    document.body.className = 'state-over';
-                    document.getElementById('status-label').innerText = "TIME OVER";
+                if (outTime) {
+                    const diffMs = outTime - now;
+                    const totalSec = Math.floor(diffMs / 1000);
+
+                    if (totalSec >= 0) {
+                        const m = Math.floor(totalSec / 60);
+                        const s = totalSec % 60;
+                        displayArea.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                    } else {
+                        const overSec = Math.floor((now - outTime) / 1000) - 1;
+                        const absOverSec = Math.max(0, overSec + 1); 
+                        const m = Math.floor(absOverSec / 60);
+                        const s = absOverSec % 60;
+                        displayArea.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                    }
+
+                    // 配色
+                    if (totalSec > 300) {
+                        document.body.className = 'state-safe';
+                        document.getElementById('status-label').innerText = "REMAINING";
+                    } else if (totalSec > 60) {
+                        document.body.className = 'state-warn';
+                        document.getElementById('status-label').innerText = "WARNING";
+                    } else if (totalSec > 0) {
+                        document.body.className = 'state-critical';
+                        document.getElementById('status-label').innerText = "READY!";
+                    } else {
+                        document.body.className = 'state-over';
+                        document.getElementById('status-label').innerText = "TIME OVER";
+                    }
                 }
             }
             requestAnimationFrame(update);
         }
 
+        // --- 以下、基本ロジックは同一 ---
         function calculateOut() {
             if (inTime && durationMins >= 0) {
                 outTime = inTime + (durationMins * 60 * 1000);
@@ -246,7 +317,11 @@
             el.addEventListener('mouseup', cancel);
         }
 
-        // IN時間の長押し設定 (カードに対して)
+        setLongPress('header-trigger', () => {
+            const group = document.getElementById('adj-group');
+            group.style.display = (group.style.display === 'flex') ? 'none' : 'flex';
+        });
+
         setLongPress('in-card-trigger', () => {
             const nowD = new Date(Date.now() + offset);
             const defaultTime = String(nowD.getHours()).padStart(2, '0') + 
@@ -260,7 +335,6 @@
             }
         });
 
-        // サービス時間の長押し設定 (カードに対して)
         setLongPress('dur-card-trigger', () => {
             const mins = prompt("SERVICE MINUTES", "20");
             if (mins !== null && mins !== "") {
@@ -269,15 +343,22 @@
             }
         });
 
-        function save() { localStorage.setItem('svc_clock_v2', JSON.stringify({ offset, inTime, durationMins, outTime })); }
+        function save() { localStorage.setItem('svc_clock_v3', JSON.stringify({ offset, inTime, durationMins, outTime, timerEnabled })); }
         function load() {
-            const saved = localStorage.getItem('svc_clock_v2');
+            const saved = localStorage.getItem('svc_clock_v3');
             if (saved) {
                 const data = JSON.parse(saved);
                 offset = data.offset || 0;
                 inTime = data.inTime || null;
                 durationMins = data.durationMins || 0;
                 outTime = data.outTime || null;
+                timerEnabled = data.timerEnabled !== undefined ? data.timerEnabled : true;
+                const btn = document.getElementById('mode-btn');
+                btn.innerText = timerEnabled ? "TIMER ON" : "TIMER OFF";
+                if (!timerEnabled) {
+                    document.body.className = 'mode-off';
+                    document.getElementById('header-label').innerText = "UNTIL IN";
+                }
                 renderInfo();
             }
         }
