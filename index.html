@@ -112,31 +112,41 @@
             text-shadow: 2px 2px 0 #ff0000, -2px -2px 0 #ff0000, 2px -2px 0 #ff0000, -2px 2px 0 #ff0000;
         }
 
+        /* info-gridを3カラムに変更 */
         .info-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            grid-template-columns: 1fr 1fr 1fr; /* 3列等分割 */
+            gap: 6px;
             margin-bottom: 10px;
             flex-shrink: 0;
+            padding: 0 5px;
         }
         .info-card {
             background-color: rgba(128,128,128,0.1);
             border: 1px solid rgba(128,128,128,0.2);
             border-radius: 10px;
-            padding: 8px;
+            padding: 8px 4px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
-        .info-val { font-size: clamp(16px, 4.5vw, 24px); font-weight: bold; color: var(--accent-color); white-space: nowrap; }
-        .info-label { font-size: 9px; margin-bottom: 2px; opacity: 0.8; }
-
-        .out-card {
-            background-color: rgba(128,128,128,0.1);
-            border: 2px solid var(--text-color);
-            border-radius: 10px;
-            padding: 8px;
-            text-align: center;
-            margin-bottom: 10px;
-            flex-shrink: 0;
+        /* 3列並びでも文字が潰れないようサイズ調整 */
+        .info-val { 
+            font-size: clamp(14px, 3.8vw, 22px); 
+            font-weight: bold; 
+            color: var(--accent-color); 
+            white-space: nowrap; 
+        }
+        .info-label { 
+            font-size: 8px; 
+            margin-bottom: 2px; 
+            opacity: 0.8; 
+            white-space: nowrap;
+        }
+        /* OUTだけ少し強調したい場合 */
+        .out-style {
+            background-color: rgba(128,128,128,0.15);
         }
         .out-time { font-size: clamp(22px, 7vw, 38px); font-weight: bold; }
 
@@ -175,18 +185,17 @@
 
     <div class="info-grid">
         <div class="info-card" id="in-card-trigger">
-            <div class="info-label">Service IN (Hold)</div>
+            <div class="info-label">SERVICE IN</div>
             <div class="info-val" id="in-time-disp">--:--:--</div>
         </div>
         <div class="info-card" id="dur-card-trigger">
-            <div class="info-label">Service Time (Hold)</div>
+            <div class="info-label">TIME</div>
             <div class="info-val" id="dur-mins-disp">-- min</div>
         </div>
-    </div>
-
-    <div class="out-card">
-        <div class="info-label">SERVICE OUT (TARGET)</div>
-        <div class="out-time" id="out-time-disp">--:--:--</div>
+        <div class="info-card out-style" style="border: 2px solid var(--text-color);">
+            <div class="info-label">SERVICE OUT</div>
+            <div class="info-val" id="out-time-disp">--:--:--</div>
+        </div>
     </div>
 
     <!--
