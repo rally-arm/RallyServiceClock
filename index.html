@@ -36,8 +36,6 @@
         body.state-warn   { --bg-color: #F1C40F; --text-color: #000000; --accent-color: #000000; }
         body.state-over   { --bg-color: #FF0000; --text-color: #FFFFFF; --accent-color: #FFFFFF; }
 
-        /* ヘッダー周り */
-        
         .header-row {
             display: flex;
             justify-content: space-between;
@@ -57,10 +55,21 @@
         .mode-btn.on { background-color: #28a745; }
         .mode-btn.off { background-color: #6c757d; }
 
-        #adj-group { display: none; gap: 5px; }
+        /* ロゴ表示エリア */
+        #logo-container {
+            display: flex;
+            align-items: center;
+            height: 100%;
+        }
+        .header-logo {
+            height: 35px; /* ボタンと高さが合うように調整 */
+            width: auto;
+            object-fit: contain;
+        }
+
+        #adj-group { display: none; gap: 5px; align-items: center; }
         .adj-btn { background: rgba(128,128,128,0.2); color: inherit; border: 1px solid currentColor; padding: 4px 8px; border-radius: 6px; font-size: 10px; }
 
-        /* メインタイマーエリア */
         .countdown-area {
             flex: 1;
             display: flex;
@@ -74,9 +83,6 @@
         }
         .label { font-size: 14px; letter-spacing: 2px; margin-bottom: 5px; opacity: 0.8; }
         
-        /* フォントサイズ計算のポイント:
-           min() を使い、画面の高さ(vh)に基づいた上限を設定することで上下の突き抜けを防止。
-        */
         .time-left { 
             font-size: min(calc((100vw - 60px) / 4.2), 35vh); 
             font-weight: bold; 
@@ -95,17 +101,16 @@
             .time-left.large { font-size: calc((100vw - 40px) / 2.6); }
         }
 
-        /* 横長画面時の微調整 */
         @media (orientation: landscape) {
             .header-row { height: 45px; }
             .info-grid { margin-bottom: 5px; gap: 5px; }
+            .header-logo { height: 28px; }
         }
 
         body.state-critical .time-left {
             text-shadow: 2px 2px 0 #ff0000, -2px -2px 0 #ff0000, 2px -2px 0 #ff0000, -2px 2px 0 #ff0000;
         }
 
-        /* 3カラム・インフォメーションエリア */
         .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -131,35 +136,27 @@
             white-space: nowrap; 
         }
         .info-label { font-size: 8px; margin-bottom: 2px; opacity: 0.8; white-space: nowrap; }
-
-        /* OUTカード専用：太枠で強調 */
         .out-style { border: 2px solid var(--text-color) !important; background-color: rgba(128,128,128,0.15); }
-
-        .preset-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-            margin-bottom: env(safe-area-inset-bottom);
-            flex-shrink: 0;
-        }
-        .btn-p {
-            background: rgba(128,128,128,0.1); border: 1px solid currentColor; color: inherit;
-            padding: 10px 0; border-radius: 6px; font-size: 14px; font-weight: bold;
-        }
     </style>
 </head>
 <body class="mode-white">
     <div class="header-row">
         <div class="header-left">
-            <button class="mode-btn off" onclick="toggleMode()" id="mode-btn">TIMER</button>
             <div class="header-info" id="header-trigger">
                 <span class="header-label" id="header-label">UNTIL IN</span>
                 <span id="header-val">--:--</span>
             </div>
+            <button class="mode-btn off" onclick="toggleMode()" id="mode-btn">TIMER OFF</button>
         </div>
-        <div id="adj-group">
-            <button class="adj-btn" onclick="adjustOffset(-100)">-0.1s</button>
-            <button class="adj-btn" onclick="adjustOffset(100)">+0.1s</button>
+        
+        <div class="header-right">
+            <div id="logo-container">
+                <img src="arm_round_logo.png" class="header-logo" alt="ARM Logo">
+            </div>
+            <div id="adj-group">
+                <button class="adj-btn" onclick="adjustOffset(-100)">-0.1s</button>
+                <button class="adj-btn" onclick="adjustOffset(100)">+0.1s</button>
+            </div>
         </div>
     </div>
 
@@ -199,10 +196,10 @@
         function updateModeButtonUI() {
             const btn = document.getElementById('mode-btn');
             if (timerEnabled) {
-                btn.innerText = "TIMER";
+                btn.innerText = "TIMER ON";
                 btn.className = "mode-btn on";
             } else {
-                btn.innerText = "TIMER";
+                btn.innerText = "TIMER OFF";
                 btn.className = "mode-btn off";
             }
         }
@@ -228,8 +225,8 @@
                 displayArea.classList.remove('large');
                 displayArea.innerText = `${hh}:${mm}:${ss}`;
                 statusLabel.innerText = "CURRENT CLOCK";
-                document.getElementById('header-label').innerText = "";
-                headerVal.innerText = "--:--";
+                document.getElementById('header-label').innerText = "UNTIL IN";
+                headerVal.innerText = inTime ? formatAuto(untilInSec) : "--:--";
             } else {
                 document.getElementById('header-label').innerText = "CLOCK";
                 headerVal.innerText = `${hh}:${mm}:${ss}`;
@@ -240,7 +237,7 @@
                     displayArea.innerText = formatAuto(untilInSec, true);
                 } else if (outTime) {
                     const diffMs = outTime - now;
-                    const remainSec = Math.floor(diffMs / 1000) + 1;
+                    const remainSec = Math.floor(diffMs / 1000);
 
                     if (now >= outTime) {
                         document.body.className = 'state-over';
@@ -292,11 +289,6 @@
             }
         }
 
-        window.setDuration = (m) => {
-            durationMins = m;
-            calculateOut();
-        };
-
         window.adjustOffset = (ms) => {
             offset += ms;
             save();
@@ -334,9 +326,17 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // ヘッダー長押しでロゴとボタンをトグル
             setLongPress('header-trigger', () => {
                 const group = document.getElementById('adj-group');
-                group.style.display = (group.style.display === 'flex') ? 'none' : 'flex';
+                const logo = document.getElementById('logo-container');
+                if (group.style.display === 'flex') {
+                    group.style.display = 'none';
+                    logo.style.display = 'flex';
+                } else {
+                    group.style.display = 'flex';
+                    logo.style.display = 'none';
+                }
             });
 
             setLongPress('in-card-trigger', () => {
