@@ -151,7 +151,7 @@
 <body class="mode-white">
     <div class="header-row">
         <div class="header-left">
-            <button class="mode-btn off" onclick="toggleMode()" id="mode-btn">TIMER OFF</button>
+            <button class="mode-btn off" onclick="toggleMode()" id="mode-btn">TIMER</button>
             <div class="header-info" id="header-trigger">
                 <span class="header-label" id="header-label">UNTIL IN</span>
                 <span id="header-val">--:--</span>
@@ -199,10 +199,10 @@
         function updateModeButtonUI() {
             const btn = document.getElementById('mode-btn');
             if (timerEnabled) {
-                btn.innerText = "TIMER ON";
+                btn.innerText = "TIMER";
                 btn.className = "mode-btn on";
             } else {
-                btn.innerText = "TIMER OFF";
+                btn.innerText = "TIMER";
                 btn.className = "mode-btn off";
             }
         }
