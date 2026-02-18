@@ -64,6 +64,11 @@
             letter-spacing: 1px;
             text-transform: uppercase;
             cursor: pointer;
+
+            /* はみ出し対策 */
+            overflow: hidden;      /* 枠外を隠す */
+            white-space: nowrap;   /* 改行させない */
+            text-overflow: ellipsis; /* はみ出たら「...」にする */
         }
         .driver-name-box:active { background-color: #333; }
 
