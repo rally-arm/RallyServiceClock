@@ -83,23 +83,20 @@
             align-items: center;
             position: relative;
             min-height: 0;
-            /* 左右にしっかりマージンを取る */
             padding: 0 15px; 
             text-align: center;
         }
         .label { font-size: 14px; letter-spacing: 2px; margin-bottom: 5px; opacity: 0.8; }
         
-        /* 画面幅に合わせて自動計算し、左右に余裕を持たせつつ最大化 */
         .time-left { 
+            /* 左右に余白を確保しつつ、文字を最大化するための計算 */
             font-size: calc((100vw - 40px) / 4.2); 
-            max-size: 30vh; /* 縦にはみ出さないよう制限 */
             font-weight: bold; 
             line-height: 0.85; 
             font-variant-numeric: tabular-nums;
             white-space: nowrap;
         }
 
-        /* 縦画面（スマホ等）での微調整 */
         @media (orientation: portrait) {
             .time-left { font-size: calc((100vw - 30px) / 3.8); }
         }
@@ -149,6 +146,234 @@
             background: rgba(128,128,128,0.1); border: 1px solid currentColor; color: inherit;
             padding: 10px 0; border-radius: 6px; font-size: 14px; font-weight: bold;
         }
+    </style>
+</head>
+<body class="mode-white">
+    <div class="header-row">
+        <div class="header-left">
+            <div class="header-info" id="header-trigger">
+                <span class="header-label" id="header-label">UNTIL IN</span>
+                <span id="header-val">--:--</span>
+            </div>
+            <button class="mode-btn off" onclick="toggleMode()" id="mode-btn">TIMER OFF</button>
+        </div>
+        <div id="adj-group">
+            <button class="adj-btn" onclick="adjustOffset(-100)">-0.1s</button>
+            <button class="adj-btn" onclick="adjustOffset(100)">+0.1s</button>
+        </div>
+    </div>
+
+    <div class="countdown-area">
+        <div class="label" id="status-label">CURRENT CLOCK</div>
+        <div id="time-left" class="time-left">00:00:00</div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-card" id="in-card-trigger">
+            <div class="info-label">Service IN (Hold)</div>
+            <div class="info-val" id="in-time-disp">--:--:--</div>
+        </div>
+        <div class="info-card" id="dur-card-trigger">
+            <div class="info-label">Service Time (Hold)</div>
+            <div class="info-val" id="dur-mins-disp">-- min</div>
+        </div>
+    </div>
+
+    <div class="out-card">
+        <div class="info-label">SERVICE OUT (TARGET)</div>
+        <div class="out-time" id="out-time-disp">--:--:--</div>
+    </div>
+
+    <div class="preset-grid">
+        <button class="btn-p" onclick="setDuration(15)">15m</button>
+        <button class="btn-p" onclick="setDuration(30)">30m</button>
+        <button class="btn-p" onclick="setDuration(45)">45m</button>
+        <button class="btn-p" onclick="setDuration(60)">60m</button>
+    </div>
+
+    <script>
+        let offset = 0;
+        let inTime = null;
+        let durationMins = 0;
+        let outTime = null;
+        let timerEnabled = false; 
+
+        function toggleMode() {
+            timerEnabled = !timerEnabled;
+            updateModeButtonUI();
+            save();
+        }
+
+        function updateModeButtonUI() {
+            const btn = document.getElementById('mode-btn');
+            if (timerEnabled) {
+                btn.innerText = "TIMER ON";
+                btn.className = "mode-btn on";
+            } else {
+                btn.innerText = "TIMER OFF";
+                btn.className = "mode-btn off";
+            }
+        }
+
+        function update() {
+            const now = Date.now() + offset;
+            const d = new Date(now);
+            const hh = String(d.getHours()).padStart(2,'0');
+            const mm = String(d.getMinutes()).padStart(2,'0');
+            const ss = String(d.getSeconds()).padStart(2,'0');
+            
+            const headerVal = document.getElementById('header-val');
+            const displayArea = document.getElementById('time-left');
+            const statusLabel = document.getElementById('status-label');
+
+            let untilInSec = 0;
+            if (inTime) {
+                untilInSec = Math.floor((inTime - now) / 1000) + 1;
+            }
+
+            if (!timerEnabled) {
+                document.body.className = 'mode-white';
+                displayArea.innerText = `${hh}:${mm}:${ss}`;
+                statusLabel.innerText = "CURRENT CLOCK";
+                document.getElementById('header-label').innerText = "UNTIL IN";
+                headerVal.innerText = inTime ? (untilInSec > 0 ? formatMMSS(untilInSec) : "00:00") : "--:--";
+            } else {
+                document.getElementById('header-label').innerText = "CLOCK";
+                headerVal.innerText = `${hh}:${mm}:${ss}`;
+
+                if (inTime && now < inTime) {
+                    document.body.className = 'mode-white';
+                    statusLabel.innerText = "UNTIL SERVICE IN";
+                    displayArea.innerText = formatMMSS(untilInSec);
+                } else if (outTime) {
+                    const diffMs = outTime - now;
+                    const remainSec = Math.floor(diffMs / 1000);
+
+                    if (now >= outTime) {
+                        document.body.className = 'state-over';
+                        statusLabel.innerText = "TIME OVER";
+                        const overSec = Math.floor((now - outTime) / 1000);
+                        displayArea.innerText = formatMMSS(overSec);
+                    } else {
+                        statusLabel.innerText = "REMAINING";
+                        displayArea.innerText = formatMMSS(remainSec);
+
+                        if (remainSec > 300) {
+                            document.body.className = 'state-safe';
+                        } else if (remainSec > 60) {
+                            document.body.className = 'state-warn';
+                        } else {
+                            document.body.className = 'state-warn state-critical';
+                        }
+                    }
+                } else {
+                    document.body.className = 'mode-white';
+                    displayArea.innerText = "SET TIME";
+                    statusLabel.innerText = "READY";
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        function formatMMSS(totalSec) {
+            const m = Math.floor(Math.abs(totalSec) / 60);
+            const s = Math.abs(totalSec) % 60;
+            return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        function calculateOut() {
+            if (inTime && durationMins >= 0) {
+                outTime = inTime + (durationMins * 60 * 1000);
+                renderInfo();
+                save();
+            }
+        }
+
+        window.setDuration = (m) => {
+            durationMins = m;
+            calculateOut();
+        };
+
+        window.adjustOffset = (ms) => {
+            offset += ms;
+            save();
+        };
+
+        function renderInfo() {
+            if (inTime) {
+                const d = new Date(inTime);
+                document.getElementById('in-time-disp').innerText = 
+                    String(d.getHours()).padStart(2,'0') + ":" + 
+                    String(d.getMinutes()).padStart(2,'0') + ":" + 
+                    String(d.getSeconds()).padStart(2,'0');
+            }
+            document.getElementById('dur-mins-disp').innerText = (durationMins || 0) + " min";
+            if (outTime) {
+                const d = new Date(outTime);
+                document.getElementById('out-time-disp').innerText = 
+                    String(d.getHours()).padStart(2,'0') + ":" + 
+                    String(d.getMinutes()).padStart(2,'0') + ":" + 
+                    String(d.getSeconds()).padStart(2,'0');
+            }
+        }
+
+        function setLongPress(id, callback) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            let timer;
+            const start = () => { timer = setTimeout(callback, 700); };
+            const cancel = () => clearTimeout(timer);
+            el.addEventListener('touchstart', start, {passive: true});
+            el.addEventListener('touchend', cancel);
+            el.addEventListener('mousedown', start);
+            el.addEventListener('mouseup', cancel);
+            el.addEventListener('mouseleave', cancel);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setLongPress('header-trigger', () => {
+                const group = document.getElementById('adj-group');
+                group.style.display = (group.style.display === 'flex') ? 'none' : 'flex';
+            });
+
+            setLongPress('in-card-trigger', () => {
+                const nowD = new Date(Date.now() + offset);
+                const defaultTime = String(nowD.getHours()).padStart(2, '0') + String(nowD.getMinutes()).padStart(2, '0') + "00";
+                const timeStr = prompt("SERVICE IN TIME (HHMMSS)", defaultTime);
+                if (timeStr && timeStr.length === 6) {
+                    const target = new Date();
+                    target.setHours(timeStr.substring(0,2), timeStr.substring(2,4), timeStr.substring(4,6), 0);
+                    inTime = target.getTime();
+                    calculateOut();
+                }
+            });
+
+            setLongPress('dur-card-trigger', () => {
+                const mins = prompt("SERVICE MINUTES", "20");
+                if (mins !== null && mins !== "") {
+                    durationMins = parseInt(mins);
+                    calculateOut();
+                }
+            });
+            
+            load();
+            updateModeButtonUI();
+            update();
+        });
+
+        function save() { localStorage.setItem('svc_clock_v8', JSON.stringify({ offset, inTime, durationMins, outTime, timerEnabled })); }
+        function load() {
+            const saved = localStorage.getItem('svc_clock_v8');
+            if (saved) {
+                const data = JSON.parse(saved);
+                offset = data.offset || 0;
+                inTime = data.inTime || null;
+                durationMins = data.durationMins || 0;
+                outTime = data.outTime || null;
+                timerEnabled = data.timerEnabled !== undefined ? data.timerEnabled : false;
+                renderInfo();
+            }
+        }
     </script>
-    </body>
+</body>
 </html>
