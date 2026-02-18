@@ -105,7 +105,7 @@
 
         @media (orientation: portrait) {
             .time-left { font-size: calc((100vw - 40px) / 3.8); }
-            .time-left.large { font-size: calc((100vw - 30px) / 2.4); }
+            .time-left.large { font-size: calc((100vw - 40px) / 3.8); }
         }
 
         body.state-critical .time-left {
@@ -189,12 +189,14 @@
         <div class="out-time" id="out-time-disp">--:--:--</div>
     </div>
 
+    <!--
     <div class="preset-grid">
         <button class="btn-p" onclick="setDuration(15)">15m</button>
         <button class="btn-p" onclick="setDuration(30)">30m</button>
         <button class="btn-p" onclick="setDuration(45)">45m</button>
         <button class="btn-p" onclick="setDuration(60)">60m</button>
     </div>
+    -->
 
     <script>
         let offset = 0;
