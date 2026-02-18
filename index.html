@@ -247,7 +247,7 @@
                     displayArea.innerText = formatMMSS(untilInSec);
                 } else if (outTime) {
                     // IN後 (実働)
-                    const diffMs = outTime - now;
+                    const diffMs = outTime - now + 1;
                     const remainSec = Math.floor(diffMs / 1000);
 
                     if (now >= outTime) {
