@@ -37,6 +37,13 @@
         body.state-over   { --bg-color: #FF0000; --text-color: #FFFFFF; --accent-color: #FFFFFF; }
 
         /* ヘッダー周り */
+        .mode-btn {
+            border: none; color: #FFF; padding: 6px 12px; border-radius: 6px;
+            font-size: 13px; font-weight: bold; font-family: sans-serif; cursor: pointer;
+        }
+        .mode-btn.on { background-color: #28a745; }
+        .mode-btn.off { background-color: #6c757d; }
+        
         .header-row {
             display: flex;
             justify-content: space-between;
@@ -49,12 +56,7 @@
         .header-info { font-size: clamp(20px, 6vw, 32px); font-weight: bold; white-space: nowrap; }
         .header-label { font-size: 10px; opacity: 0.7; display: block; margin-bottom: -2px; }
 
-        .mode-btn {
-            border: none; color: #FFF; padding: 6px 12px; border-radius: 6px;
-            font-size: 13px; font-weight: bold; font-family: sans-serif; cursor: pointer;
-        }
-        .mode-btn.on { background-color: #28a745; }
-        .mode-btn.off { background-color: #6c757d; }
+        
 
         #adj-group { display: none; gap: 5px; }
         .adj-btn { background: rgba(128,128,128,0.2); color: inherit; border: 1px solid currentColor; padding: 4px 8px; border-radius: 6px; font-size: 10px; }
