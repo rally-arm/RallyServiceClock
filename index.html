@@ -20,7 +20,7 @@
             color: var(--text-color);
             font-family: 'WRCROMAN', sans-serif;
             margin: 0;
-            padding: 10px;
+            padding: 5px 10px;
             height: 100dvh;
             display: flex;
             flex-direction: column;
@@ -36,45 +36,30 @@
         body.state-warn   { --bg-color: #F1C40F; --text-color: #000000; --accent-color: #000000; }
         body.state-over   { --bg-color: #FF0000; --text-color: #FFFFFF; --accent-color: #FFFFFF; }
 
+        /* ヘッダー周り */
         .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 65px;
+            height: 60px;
             flex-shrink: 0;
             padding: 0 5px;
         }
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .header-info { 
-            font-size: clamp(24px, 7vw, 36px); 
-            font-weight: bold; 
-            white-space: nowrap;
-        }
-        .header-label { font-size: 11px; opacity: 0.7; display: block; margin-bottom: -2px; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-info { font-size: clamp(20px, 6vw, 32px); font-weight: bold; white-space: nowrap; }
+        .header-label { font-size: 10px; opacity: 0.7; display: block; margin-bottom: -2px; }
 
         .mode-btn {
-            border: none;
-            color: #FFF;
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            font-family: sans-serif;
-            cursor: pointer;
+            border: none; color: #FFF; padding: 6px 12px; border-radius: 6px;
+            font-size: 13px; font-weight: bold; font-family: sans-serif; cursor: pointer;
         }
         .mode-btn.on { background-color: #28a745; }
         .mode-btn.off { background-color: #6c757d; }
 
         #adj-group { display: none; gap: 5px; }
-        .adj-btn {
-            background: rgba(128,128,128,0.2); color: inherit; border: 1px solid currentColor;
-            padding: 6px 10px; border-radius: 8px; font-size: 11px;
-        }
+        .adj-btn { background: rgba(128,128,128,0.2); color: inherit; border: 1px solid currentColor; padding: 4px 8px; border-radius: 6px; font-size: 10px; }
 
+        /* メインタイマーエリア */
         .countdown-area {
             flex: 1;
             display: flex;
@@ -83,40 +68,47 @@
             align-items: center;
             position: relative;
             min-height: 0;
-            padding: 0 20px; /* 物理的な余白を確保 */
+            padding: 0 20px;
             text-align: center;
         }
         .label { font-size: 14px; letter-spacing: 2px; margin-bottom: 5px; opacity: 0.8; }
         
-        /* HH:MM:SS 用サイズ（余白確保） */
+        /* フォントサイズ計算のポイント:
+           min() を使い、画面の高さ(vh)に基づいた上限を設定することで上下の突き抜けを防止。
+        */
         .time-left { 
-            font-size: calc((100vw - 60px) / 4.2); 
+            font-size: min(calc((100vw - 60px) / 4.2), 35vh); 
             font-weight: bold; 
-            line-height: 0.85; 
+            line-height: 0.9; 
             font-variant-numeric: tabular-nums;
             white-space: nowrap;
             transition: font-size 0.1s;
         }
 
-        /* MM:SS 用サイズ（余白確保しつつ拡大） */
         .time-left.large {
-            font-size: calc((100vw - 50px) / 2.8); 
+            font-size: min(calc((100vw - 50px) / 3.0), 45vh); 
         }
 
         @media (orientation: portrait) {
             .time-left { font-size: calc((100vw - 40px) / 3.8); }
-            .time-left.large { font-size: calc((100vw - 40px) / 3.8); }
+            .time-left.large { font-size: calc((100vw - 40px) / 2.6); }
+        }
+
+        /* 横長画面時の微調整 */
+        @media (orientation: landscape) {
+            .header-row { height: 45px; }
+            .info-grid { margin-bottom: 5px; gap: 5px; }
         }
 
         body.state-critical .time-left {
             text-shadow: 2px 2px 0 #ff0000, -2px -2px 0 #ff0000, 2px -2px 0 #ff0000, -2px 2px 0 #ff0000;
         }
 
-        /* info-gridを3カラムに変更 */
+        /* 3カラム・インフォメーションエリア */
         .info-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr; /* 3列等分割 */
-            gap: 6px;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
             margin-bottom: 10px;
             flex-shrink: 0;
             padding: 0 5px;
@@ -131,24 +123,16 @@
             flex-direction: column;
             justify-content: center;
         }
-        /* 3列並びでも文字が潰れないようサイズ調整 */
         .info-val { 
             font-size: clamp(14px, 3.8vw, 22px); 
             font-weight: bold; 
             color: var(--accent-color); 
             white-space: nowrap; 
         }
-        .info-label { 
-            font-size: 8px; 
-            margin-bottom: 2px; 
-            opacity: 0.8; 
-            white-space: nowrap;
-        }
-        /* OUTだけ少し強調したい場合 */
-        .out-style {
-            background-color: rgba(128,128,128,0.15);
-        }
-        .out-time { font-size: clamp(22px, 7vw, 38px); font-weight: bold; }
+        .info-label { font-size: 8px; margin-bottom: 2px; opacity: 0.8; white-space: nowrap; }
+
+        /* OUTカード専用：太枠で強調 */
+        .out-style { border: 2px solid var(--text-color) !important; background-color: rgba(128,128,128,0.15); }
 
         .preset-grid {
             display: grid;
@@ -185,27 +169,18 @@
 
     <div class="info-grid">
         <div class="info-card" id="in-card-trigger">
-            <div class="info-label">SERVICE IN</div>
+            <div class="info-label">SERVICE IN (Hold)</div>
             <div class="info-val" id="in-time-disp">--:--:--</div>
         </div>
         <div class="info-card" id="dur-card-trigger">
-            <div class="info-label">TIME</div>
+            <div class="info-label">SERVICE TIME (Hold)</div>
             <div class="info-val" id="dur-mins-disp">-- min</div>
         </div>
-        <div class="info-card out-style" style="border: 2px solid var(--text-color);">
-            <div class="info-label">SERVICE OUT</div>
+        <div class="info-card out-style">
+            <div class="info-label">SERVICE OUT (TARGET)</div>
             <div class="info-val" id="out-time-disp">--:--:--</div>
         </div>
     </div>
-
-    <!--
-    <div class="preset-grid">
-        <button class="btn-p" onclick="setDuration(15)">15m</button>
-        <button class="btn-p" onclick="setDuration(30)">30m</button>
-        <button class="btn-p" onclick="setDuration(45)">45m</button>
-        <button class="btn-p" onclick="setDuration(60)">60m</button>
-    </div>
-    -->
 
     <script>
         let offset = 0;
